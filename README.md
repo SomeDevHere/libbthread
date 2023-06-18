@@ -1,5 +1,13 @@
 libbthread
 ==========
+This fork removes the usage of the pthread internals to make it more compatable for different Android versions.
+
+
+
+Original README below
+
+libbthread
+==========
 
 library that provide some missing posix threading function to the bionic libc.
 

@@ -23,36 +23,38 @@
 
 #include <errno.h>
 
-int
-pthread_cancel (pthread_t t)
-{
-  int err = 0;
-  struct pthread_internal_t *p = (struct pthread_internal_t*) t;
+int pthread_cancel (pthread_t t) {
+	int err = 0;
 	
-	pthread_init();
+	__pthread_init();
+
+	struct pthread_internal_t *p = __pthread_lookup(t);
+
+	if(!p) {
+		pthread_kill(t, SIGTERM);
+		return 0;
+	}
 	
-  pthread_mutex_lock (&p->cancel_lock);
-  if (p->attr.flags & PTHREAD_ATTR_FLAG_CANCEL_PENDING)
-    {
-      pthread_mutex_unlock (&p->cancel_lock);
-      return 0;
-    }
-    
-  p->attr.flags |= PTHREAD_ATTR_FLAG_CANCEL_PENDING;
-
-  if (!(p->attr.flags & PTHREAD_ATTR_FLAG_CANCEL_ENABLE))
-    {
-      pthread_mutex_unlock (&p->cancel_lock);
-      return 0;
-    }
-
-  if (p->attr.flags & PTHREAD_ATTR_FLAG_CANCEL_ASYNCRONOUS) {
+	pthread_mutex_lock (&p->cancel_lock);
+	if (p->attr_flags & PTHREAD_ATTR_FLAG_CANCEL_PENDING) {
 		pthread_mutex_unlock (&p->cancel_lock);
-    err = __pthread_do_cancel (p);
+		return 0;
+	}
+    
+	p->attr_flags |= PTHREAD_ATTR_FLAG_CANCEL_PENDING;
+
+	if (!(p->attr_flags & PTHREAD_ATTR_FLAG_CANCEL_ENABLE)) {
+		pthread_mutex_unlock (&p->cancel_lock);
+		return 0;
+	}
+
+	if (p->attr_flags & PTHREAD_ATTR_FLAG_CANCEL_ASYNCRONOUS) {
+		pthread_mutex_unlock (&p->cancel_lock);
+		err = __pthread_do_cancel (p, t);
 	} else {
 		// DEFERRED CANCEL NOT IMPLEMENTED YET
 		pthread_mutex_unlock (&p->cancel_lock);
 	}
 
-  return err;
+	return err;
 }

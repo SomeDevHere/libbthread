@@ -17,6 +17,8 @@
    write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
+#include <pthread.h>
+
 # define PTHREAD_CANCEL_ENABLE    	 0x00000010
 # define PTHREAD_CANCEL_DISABLE   	 0x00000000
 

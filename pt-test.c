@@ -24,7 +24,7 @@
 
 pthread_mutex_t print_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t print_request_lock = PTHREAD_MUTEX_INITIALIZER;
-int print_request,want_exit;
+int print_request,want_exit,child_ready;
 
 void print_pthread_internal(struct pthread_internal_t * p) {
 	pthread_mutex_lock(&print_lock);
@@ -32,30 +32,21 @@ void print_pthread_internal(struct pthread_internal_t * p) {
 	printf("\n\n%s called by %p\n", __func__, (struct pthread_internal_t *)pthread_self());
 	printf("p=%p\n",p);
 	printf("p->next=%p\n", p->next);
-	printf("p->prev=%p\n", p->prev);
-	printf("p->tid=%d\n", p->tid);
-	printf("p->attr.flags=%04x\n", p->attr.flags);
-	printf("p->attr.stack_base=%p\n", p->attr.stack_base);
-	printf("p->attr.stack_size=%d\n", p->attr.stack_size);
-	printf("p->attr.guard_size=%d\n", p->attr.guard_size);
-	printf("p->attr.sched_policy=%d\n", p->attr.sched_policy);
-	printf("p->attr.sched_priority=%d\n", p->attr.sched_priority);
-	printf("p->cleanup_stack=%p\n", p->cleanup_stack);
-	printf("p->start_routine=%p\n", p->start_routine);
-	printf("p->return_value=%p\n", p->return_value);
-	printf("p->alternate_signal_stack=%p\n", p->alternate_signal_stack);
+	printf("p->attr.flags=%04x\n", p->attr_flags);
 	
 	pthread_mutex_unlock(&print_lock);
 }
 
 
 void *child(void *arg) {
-	
+	__pthread_init();
+	child_ready = 1;
+
 	pthread_t id = pthread_self();
-	struct pthread_internal_t * p = (struct pthread_internal_t *)id;
+	struct pthread_internal_t * p = __pthread_internal_self();
 	int print,run;
 	
-	printf("child=%p\n", p);
+	printf("child=%p\n", id);
 	
 	
 	for(run=1;run;) {
@@ -87,40 +78,54 @@ void wait_print(void) {
 	}while(!has_printed);
 }
 
+void wait_ready(void) {
+	int is_ready;
+	do {
+		usleep(100);
+		is_ready = (child_ready==1);
+	}while(!is_ready);
+}
+
 int main(int argc, char **argv) {
+	__pthread_init();
 	
 	pthread_t id,child_id;
 	struct pthread_internal_t *p, *child_p;
 	
-	p=(struct pthread_internal_t *)(id=pthread_self());
+	p = __pthread_internal_self();
+
+	id=pthread_self();
 	
 	printf("main=%p\n", p);
 	
 	print_request = 1;
 	want_exit = 0;
+	child_ready = 0;
 	
 	pthread_create(&child_id, NULL, &child, NULL);
 	
-	child_p  = (struct pthread_internal_t *)child_id;
+	wait_ready();
+
+	child_p  = __pthread_lookup(child_id);
 	
 	wait_print();
 	
 	printf("setting cancel enable on %p\n", child_p);
-	child_p->attr.flags |= PTHREAD_ATTR_FLAG_CANCEL_ENABLE;
+	child_p->attr_flags |= PTHREAD_ATTR_FLAG_CANCEL_ENABLE;
 	print_pthread_internal(child_p);
 	
 	set_print();
 	wait_print();
 	
 	printf("setting cancel async on %p\n", child_p);
-	child_p->attr.flags |= PTHREAD_ATTR_FLAG_CANCEL_ASYNCRONOUS;
+	child_p->attr_flags |= PTHREAD_ATTR_FLAG_CANCEL_ASYNCRONOUS;
 	print_pthread_internal(child_p);
 	
 	set_print();
 	wait_print();
 	
 	printf("setting cancel pending on %p\n", child_p);
-	child_p->attr.flags |= PTHREAD_ATTR_FLAG_CANCEL_PENDING;
+	child_p->attr_flags |= PTHREAD_ATTR_FLAG_CANCEL_PENDING;
 	print_pthread_internal(child_p);
 	
 	pthread_mutex_lock(&print_request_lock);

@@ -22,21 +22,17 @@
 #include <pt-internal.h>
 
 static void
-call_exit (void)
-{
+call_exit (void) {
   pthread_exit (0);
 }
 
 int
-__pthread_do_cancel (struct pthread_internal_t *p)
-{
-	
-	if(p == (struct pthread_internal_t *)pthread_self())
-    call_exit ();
-  else if(p->attr.flags & PTHREAD_ATTR_FLAG_CANCEL_HANDLER)
-    pthread_kill((pthread_t)p, SIGRTMIN);
+__pthread_do_cancel (struct pthread_internal_t *p, pthread_t thread) {
+	if(pthread_equal(thread, pthread_self()))
+		call_exit ();
+	else if(p->attr_flags & PTHREAD_ATTR_FLAG_CANCEL_HANDLER)
+		pthread_kill(thread, SIGRTMIN);
 	else
-		pthread_kill((pthread_t)p, SIGTERM);
-
-  return 0;
+		pthread_kill(thread, SIGTERM);
+	return 0;
 }

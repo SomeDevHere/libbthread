@@ -22,18 +22,16 @@
 #include <pt-internal.h>
 
 void
-pthread_testcancel (void)
-{
-  struct pthread_internal_t *p = (struct pthread_internal_t*)pthread_self();
-  int cancelled;
+pthread_testcancel (void) {
+	__pthread_init();
+	struct pthread_internal_t *p = __pthread_internal_self();
+	int cancelled;
 	
-	pthread_init();
+	pthread_mutex_lock (&p->cancel_lock);
+	cancelled = (p->attr_flags & PTHREAD_ATTR_FLAG_CANCEL_ENABLE) && (p->attr_flags & PTHREAD_ATTR_FLAG_CANCEL_PENDING);
+	pthread_mutex_unlock (&p->cancel_lock);
 
-  pthread_mutex_lock (&p->cancel_lock);
-  cancelled = (p->attr.flags & PTHREAD_ATTR_FLAG_CANCEL_ENABLE) && (p->attr.flags & PTHREAD_ATTR_FLAG_CANCEL_PENDING);
-  pthread_mutex_unlock (&p->cancel_lock);
+	if (cancelled)
+		pthread_exit (PTHREAD_CANCELED);
 
-  if (cancelled)
-    pthread_exit (PTHREAD_CANCELED);
-		
 }

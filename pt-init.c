@@ -26,16 +26,16 @@ void pthread_cancel_handler(int signum) {
 	pthread_exit(0);
 }
 
-void pthread_init(void) {
+void __pthread_init(void) {
 	struct sigaction sa;
-	struct pthread_internal_t * p = (struct pthread_internal_t *)pthread_self();
+	struct pthread_internal_t * p = __pthread_internal_init();
 	
-	if(p->attr.flags & PTHREAD_ATTR_FLAG_CANCEL_HANDLER)
+	if(p->attr_flags & PTHREAD_ATTR_FLAG_CANCEL_HANDLER)
 		return;
 	
 	// set thread status as pthread_create should do.
 	// ASYNCROUNOUS is not set, see pthread_setcancelstate(3)
-	p->attr.flags |= PTHREAD_ATTR_FLAG_CANCEL_HANDLER|PTHREAD_ATTR_FLAG_CANCEL_ENABLE;
+	p->attr_flags |= PTHREAD_ATTR_FLAG_CANCEL_HANDLER|PTHREAD_ATTR_FLAG_CANCEL_ENABLE;
 	
 	sa.sa_handler = pthread_cancel_handler;
 	sigemptyset(&(sa.sa_mask));

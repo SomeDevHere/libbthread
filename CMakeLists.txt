@@ -16,17 +16,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -O2 -std=c++11 ")
 
 include_directories(${PROJECT_SOURCE_DIR})
 
-set(pt-cancel pt-cancel.c)
-set(pt-docancel pt-docancel.c)
-set(pt-init pt-init.c)
-set(pt-setcancelstate pt-setcancelstate.c)
-set(pt-setcanceltype pt-setcanceltype.c)
-set(pt-test pt-test.c)
-set(pt-testcancel pt-testcancel.c)
-
-
-# Build a static lib
-add_library(cancelthread STATIC ${pt-cancel} ${pt-docancel} ${pt-init} ${pt-setcancelstate} ${pt-setcanceltype} ${pt-test} ${pt-testcancel})
-
+add_library(cancelthread SHARED pt-cancel.c pt-docancel.c pt-init.c pt-internal.c pt-setcancelstate.c pt-setcanceltype.c pt-testcancel.c)
 
 target_link_libraries(cancelthread -lz -ldl -lm -lpthread)

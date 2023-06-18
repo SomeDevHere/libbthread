@@ -25,7 +25,8 @@ LOCAL_SRC_FILES:=\
 	pt-setcancelstate.c\
 	pt-setcanceltype.c\
 	pt-testcancel.c\
-	pt-init.c
+	pt-init.c\
+	pt-internal.c
 
 LOCAL_C_INCLUDES:=libbthread/
 	
