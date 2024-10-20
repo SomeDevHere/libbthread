@@ -18,7 +18,12 @@ include_directories(${PROJECT_SOURCE_DIR})
 
 add_library(cancelthread SHARED pt-cancel.c pt-docancel.c pt-init.c pt-internal.c pt-setcancelstate.c pt-setcanceltype.c pt-testcancel.c)
 
-target_link_libraries(cancelthread -lz -ldl -lm -lpthread)
+find_library(LIBPTHREAD pthread)
+if (LIBPTHREAD) 
+	target_link_libraries(cancelthread -lz -ldl -lm -lpthread)
+else()
+	target_link_libraries(cancelthread -lz -ldl -lm)
+endif()
 
 install(FILES bthread.h ${CMAKE_CURRENT_SOURCE_DIR/bthread.h} DESTINATION include)
 install(TARGETS cancelthread DESTINATION lib)
