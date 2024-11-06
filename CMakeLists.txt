@@ -10,6 +10,9 @@ cmake_minimum_required (VERSION 3.9)
 # Specify the project, and set the use of c++ and c
 project(cancelthread LANGUAGES CXX C)
 
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+option(BUILD_EXAMPLES "Build examples using library" ON)
+
 add_compile_options(-ffunction-sections -fdata-sections -Wall -Wextra -Wpedantic)
 set(SRCS pt-cancel.c pt-docancel.c pt-init.c pt-internal.c pt-setcancelstate.c pt-setcanceltype.c pt-testcancel.c)
 if(BUILD_SHARED_LIBS)
