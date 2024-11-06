@@ -6,19 +6,40 @@ endif()
 
 # Set minimum cmake version + cmake settings
 cmake_minimum_required (VERSION 3.9)
-cmake_policy(SET CMP0048 OLD)
 
 # Specify the project, and set the use of c++ and c
 project(cancelthread LANGUAGES CXX C)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fPIC -rdynamic -Wall -O2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -O2 -std=c++11 ")
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+option(BUILD_EXAMPLES "Build examples using library" ON)
 
-include_directories(${PROJECT_SOURCE_DIR})
+add_compile_options(-ffunction-sections -fdata-sections -Wall -Wextra -Wpedantic)
+set(SRCS pt-cancel.c pt-docancel.c pt-init.c pt-internal.c pt-setcancelstate.c pt-setcanceltype.c pt-testcancel.c)
+if(BUILD_SHARED_LIBS)
+add_library(cancelthread SHARED ${SRCS})
+else()
+add_library(cancelthread STATIC ${SRCS})
+endif()
+target_include_directories(cancelthread PUBLIC ${PROJECT_SOURCE_DIR})
+set_property(TARGET cancelthread PROPERTY C_STANDARD 11)
 
-add_library(cancelthread SHARED pt-cancel.c pt-docancel.c pt-init.c pt-internal.c pt-setcancelstate.c pt-setcanceltype.c pt-testcancel.c)
+find_library(LIBPTHREAD pthread)
+if (LIBPTHREAD) 
+	target_link_libraries(cancelthread -lz -ldl -lm -lpthread)
+else()
+	target_link_libraries(cancelthread -lz -ldl -lm)
+endif()
 
-target_link_libraries(cancelthread -lz -ldl -lm -lpthread)
+if(BUILD_EXAMPLES)
+add_executable(bthread_test pt-test.c)
+target_link_libraries(bthread_test PRIVATE cancelthread)
+endif()
 
-install(FILES bthread.h ${CMAKE_CURRENT_SOURCE_DIR/bthread.h} DESTINATION include)
-install(TARGETS cancelthread DESTINATION lib)
+install(FILES bthread.h DESTINATION include)
+install(TARGETS cancelthread 
+      RUNTIME
+        DESTINATION bin
+      LIBRARY
+        DESTINATION lib
+      ARCHIVE
+        DESTINATION lib)
