@@ -25,5 +25,5 @@ else()
 	target_link_libraries(cancelthread -lz -ldl -lm)
 endif()
 
-install(FILES bthread.h ${CMAKE_CURRENT_SOURCE_DIR/bthread.h} DESTINATION include)
+install(FILES bthread.h DESTINATION include)
 install(TARGETS cancelthread DESTINATION lib)
